@@ -83,9 +83,10 @@ void CscreenrecoderDlg::OnBnClickedButton1()
 	elog_set_filter_lvl(ELOG_LVL_DEBUG);
 	elog_set_fmt(ELOG_LVL_INFO, ELOG_FMT_ALL & ~ELOG_FMT_TAG & ~ELOG_FMT_P_INFO);
 	elog_start();
-	for (int i = 0; i < 4096; i++)
-		for (int j = 0; j < 2048; j++)
-			log_i("test: %d.", i * j);
+	for (int i = 0; i < 1024; i++)
+		for (int j = 0; j < 512; j++)
+			log_i("test: %d.", j);
 }
 ```
 
+## 将日志输出到对话框

@@ -16,4 +16,9 @@
 
 # 开发记录
 
-见[`\doc\development_records.md`]()
+见[`\doc\development_records.md`](https://github.com/PedigreeCat/ScreenRecoder/blob/main/doc/开发记录.md)
+
+# 引用的开源库
+
+- [EasyLogger](https://github.com/armink/EasyLogger)
+- [FFmpeg](https://github.com/FFmpeg/FFmpeg)
