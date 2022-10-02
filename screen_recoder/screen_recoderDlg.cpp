@@ -8,6 +8,9 @@
 #include "screen_recoderDlg.h"
 #include "afxdialogex.h"
 
+#include "elog.h"
+#define LOG_TAG "DLG"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -65,6 +68,7 @@ BEGIN_MESSAGE_MAP(CscreenrecoderDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_BN_CLICKED(IDC_BUTTON1, &CscreenrecoderDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 
@@ -153,3 +157,16 @@ HCURSOR CscreenrecoderDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CscreenrecoderDlg::OnBnClickedButton1()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	elog_init();
+	elog_set_filter_lvl(ELOG_LVL_DEBUG);
+	elog_set_fmt(ELOG_LVL_INFO, ELOG_FMT_ALL & ~ELOG_FMT_TAG & ~ELOG_FMT_P_INFO);
+	elog_start();
+	for (int i = 0; i < 1024; i++)
+		for (int j = 0; j < 512; j++)
+			log_i("test: %d.", j);
+}

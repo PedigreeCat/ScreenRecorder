@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="头文件\easylogger">
+      <UniqueIdentifier>{e3734c15-8691-4390-8292-4d1e21fa9ec6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\easylogger">
+      <UniqueIdentifier>{5fa60d9f-2e43-4138-ae33-39a323813d0e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="screen_recoder.h">
@@ -33,6 +39,18 @@
     <ClInclude Include="pch.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\dependence\easylogger\inc\elog.h">
+      <Filter>头文件\easylogger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependence\easylogger\inc\elog_cfg.h">
+      <Filter>头文件\easylogger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependence\easylogger\plugins\file\elog_file.h">
+      <Filter>头文件\easylogger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dependence\easylogger\plugins\file\elog_file_cfg.h">
+      <Filter>头文件\easylogger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="screen_recoder.cpp">
@@ -43,6 +61,21 @@
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependence\easylogger\src\elog.c">
+      <Filter>源文件\easylogger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependence\easylogger\src\elog_utils.c">
+      <Filter>源文件\easylogger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependence\easylogger\port\elog_port.c">
+      <Filter>源文件\easylogger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependence\easylogger\plugins\file\elog_file.c">
+      <Filter>源文件\easylogger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dependence\easylogger\plugins\file\elog_file_port.c">
+      <Filter>源文件\easylogger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
