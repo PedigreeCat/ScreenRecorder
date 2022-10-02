@@ -16,7 +16,7 @@
 
 # 开发记录
 
-见[`\doc\development_records.md`](https://github.com/PedigreeCat/ScreenRecoder/blob/main/doc/开发记录.md)
+见[`\doc\development_records.md`](https://github.com/PedigreeCat/ScreenRecoder/blob/main/doc/development_records.md)
 
 # 引用的开源库
 
