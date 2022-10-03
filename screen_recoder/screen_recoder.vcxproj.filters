@@ -51,6 +51,12 @@
     <ClInclude Include="..\dependence\easylogger\plugins\file\elog_file_cfg.h">
       <Filter>头文件\easylogger</Filter>
     </ClInclude>
+    <ClInclude Include="Clogger.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Ctool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="screen_recoder.cpp">
@@ -76,6 +82,12 @@
     </ClCompile>
     <ClCompile Include="..\dependence\easylogger\plugins\file\elog_file_port.c">
       <Filter>源文件\easylogger</Filter>
+    </ClCompile>
+    <ClCompile Include="Clogger.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Ctool.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

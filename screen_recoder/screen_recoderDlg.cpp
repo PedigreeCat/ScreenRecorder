@@ -8,13 +8,23 @@
 #include "screen_recoderDlg.h"
 #include "afxdialogex.h"
 
-#include "elog.h"
-#define LOG_TAG "DLG"
+#include "Clogger.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "libavutil/avutil.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+#define TIMER_LOG_UPDATE	(1)	/* 编辑框日志更新定时器 */
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -46,6 +56,7 @@ void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+
 END_MESSAGE_MAP()
 
 
@@ -55,6 +66,8 @@ END_MESSAGE_MAP()
 
 CscreenrecoderDlg::CscreenrecoderDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_SCREEN_RECODER_DIALOG, pParent)
+	, m_logAreaStr(_T(""))
+	, m_logAreaGetFocus(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -62,13 +75,18 @@ CscreenrecoderDlg::CscreenrecoderDlg(CWnd* pParent /*=nullptr*/)
 void CscreenrecoderDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT_LOGAREA, m_logAreaCtrl);
+	DDX_Text(pDX, IDC_EDIT_LOGAREA, m_logAreaStr);
 }
 
 BEGIN_MESSAGE_MAP(CscreenrecoderDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON1, &CscreenrecoderDlg::OnBnClickedButton1)
+	ON_WM_TIMER()
+	ON_EN_KILLFOCUS(IDC_EDIT_LOGAREA, &CscreenrecoderDlg::OnEnKillfocusEditLogarea)
+	ON_EN_SETFOCUS(IDC_EDIT_LOGAREA, &CscreenrecoderDlg::OnEnSetfocusEditLogarea)
+	ON_BN_CLICKED(IDC_BUTTON_CLEAN_LOG, &CscreenrecoderDlg::OnBnClickedButtonCleanLog)
 END_MESSAGE_MAP()
 
 
@@ -104,6 +122,7 @@ BOOL CscreenrecoderDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+	SetTimer(TIMER_LOG_UPDATE, 1000, NULL);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -157,16 +176,56 @@ HCURSOR CscreenrecoderDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+void CscreenrecoderDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+
+	/* 测试日志 */
+	ELOG_W("elog test: %s", "----------elog test----------");
+	av_log(NULL, AV_LOG_WARNING, "ffmpeg log test: %s", "----------av_log test-------");
+
+	switch (nIDEvent)
+	{
+		case TIMER_LOG_UPDATE:
+		{
+			LogAreaUpdate();
+		}
+		break;
+	}
+	CDialogEx::OnTimer(nIDEvent);
+}
+
+void CscreenrecoderDlg::LogAreaUpdate()
+{
+	/* 焦点在日志区域时不更新 */
+	if (TRUE == m_logAreaGetFocus)
+		return;
+	std::string tmp;
+	Clogger::getInstance()->getLogCacheAndClean(tmp);
+	UpdateData(TRUE);
+	m_logAreaStr += tmp.c_str();
+	UpdateData(FALSE);
+	m_logAreaCtrl.LineScroll(m_logAreaCtrl.GetLineCount());
+}
 
 
-void CscreenrecoderDlg::OnBnClickedButton1()
+void CscreenrecoderDlg::OnEnKillfocusEditLogarea()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	elog_init();
-	elog_set_filter_lvl(ELOG_LVL_DEBUG);
-	elog_set_fmt(ELOG_LVL_INFO, ELOG_FMT_ALL & ~ELOG_FMT_TAG & ~ELOG_FMT_P_INFO);
-	elog_start();
-	for (int i = 0; i < 1024; i++)
-		for (int j = 0; j < 512; j++)
-			log_i("test: %d.", j);
+	m_logAreaGetFocus = FALSE;
+}
+
+
+void CscreenrecoderDlg::OnEnSetfocusEditLogarea()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_logAreaGetFocus = TRUE;
+}
+
+void CscreenrecoderDlg::OnBnClickedButtonCleanLog()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	m_logAreaStr.Empty();
+	UpdateData(FALSE);
 }

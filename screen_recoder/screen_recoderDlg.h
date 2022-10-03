@@ -32,5 +32,16 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedButton1();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+private:
+	void LogAreaUpdate();
+
+private:
+	CEdit m_logAreaCtrl;
+	CString m_logAreaStr;
+	BOOL m_logAreaGetFocus;
+public:
+	afx_msg void OnEnKillfocusEditLogarea();
+	afx_msg void OnEnSetfocusEditLogarea();
+	afx_msg void OnBnClickedButtonCleanLog();
 };
