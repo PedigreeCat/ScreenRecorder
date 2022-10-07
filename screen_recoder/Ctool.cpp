@@ -5,15 +5,46 @@
 
 Ctool Ctool::m_instance;
 
-void Ctool::convertUTF8toANSI(const char* utf8str, char* ansistr)
+void Ctool::convertUTF8ToANSI(const char* utf8str, char* ansistr)
 {
 	/* UTF8 to Unicode */
-	int len = MultiByteToWideChar(CP_UTF8, 0, utf8str, -1, NULL, 0);
-	len = MultiByteToWideChar(CP_UTF8, 0, utf8str, -1, m_wcharBuf, len);
+	convertUTF8ToUnicode(utf8str, m_wcharBuf);
 	
 	/* Unicode to ANSI */
-	len = WideCharToMultiByte(CP_ACP, 0, m_wcharBuf, -1, NULL, 0, NULL, NULL);
-	len = WideCharToMultiByte(CP_ACP, 0, m_wcharBuf, -1, ansistr, len, NULL, NULL);
+	convertUnicodeToANSI(m_wcharBuf, ansistr);
+}
+
+void Ctool::convertANSIToUTF8(const char* ansistr, char* utf8str)
+{
+	/* ANSI to Unicode */
+	convertANSIToUnicode(ansistr, m_wcharBuf);
+
+	/* Unicode to UTF8 */
+	convertUnicodeToUTF8(m_wcharBuf, utf8str);
+}
+
+void Ctool::convertANSIToUnicode(const char* ansistr, wchar_t* unicodestr)
+{
+	int len = MultiByteToWideChar(CP_ACP, 0, ansistr, -1, NULL, 0);
+	len = MultiByteToWideChar(CP_ACP, 0, ansistr, -1, unicodestr, len);
+}
+
+void Ctool::convertUTF8ToUnicode(const char* utf8str, wchar_t* unicodestr)
+{
+	int len = MultiByteToWideChar(CP_UTF8, 0, utf8str, -1, NULL, 0);
+	len = MultiByteToWideChar(CP_UTF8, 0, utf8str, -1, unicodestr, len);
+}
+
+void Ctool::convertUnicodeToUTF8(const wchar_t* unicodestr, char* utf8str)
+{
+	int len = WideCharToMultiByte(CP_UTF8, 0, unicodestr, -1, NULL, 0, NULL, NULL);
+	len = WideCharToMultiByte(CP_UTF8, 0, unicodestr, -1, utf8str, len, NULL, NULL);
+}
+
+void Ctool::convertUnicodeToANSI(const wchar_t* unicodestr, char* ansistr)
+{
+	int len = WideCharToMultiByte(CP_ACP, 0, unicodestr, -1, NULL, 0, NULL, NULL);
+	len = WideCharToMultiByte(CP_ACP, 0, unicodestr, -1, ansistr, len, NULL, NULL);
 }
 
 Ctool::Ctool()

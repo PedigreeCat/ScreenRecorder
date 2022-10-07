@@ -9,22 +9,14 @@
 #include "afxdialogex.h"
 
 #include "Clogger.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "libavutil/avutil.h"
-
-#ifdef __cplusplus
-}
-#endif
+#include "Ctool.h"
+#include "CAudioRecorder.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-#define TIMER_LOG_UPDATE	(1)	/* 编辑框日志更新定时器 */
+constexpr int TIMER_LOG_UPDATE = 1;	/* 编辑框日志更新定时器 */
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -77,6 +69,7 @@ void CscreenrecoderDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_LOGAREA, m_logAreaCtrl);
 	DDX_Text(pDX, IDC_EDIT_LOGAREA, m_logAreaStr);
+	DDX_Control(pDX, IDC_COMBO_AUDIO_DEVICE, m_audioDeviceCtrl);
 }
 
 BEGIN_MESSAGE_MAP(CscreenrecoderDlg, CDialogEx)
@@ -87,6 +80,8 @@ BEGIN_MESSAGE_MAP(CscreenrecoderDlg, CDialogEx)
 	ON_EN_KILLFOCUS(IDC_EDIT_LOGAREA, &CscreenrecoderDlg::OnEnKillfocusEditLogarea)
 	ON_EN_SETFOCUS(IDC_EDIT_LOGAREA, &CscreenrecoderDlg::OnEnSetfocusEditLogarea)
 	ON_BN_CLICKED(IDC_BUTTON_CLEAN_LOG, &CscreenrecoderDlg::OnBnClickedButtonCleanLog)
+	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CscreenrecoderDlg::OnBnClickedButtonRecord)
+	ON_BN_CLICKED(IDC_BUTTON_REFRESH, &CscreenrecoderDlg::OnBnClickedButtonRefresh)
 END_MESSAGE_MAP()
 
 
@@ -122,8 +117,8 @@ BOOL CscreenrecoderDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
-	SetTimer(TIMER_LOG_UPDATE, 1000, NULL);
-
+	SetTimer(TIMER_LOG_UPDATE, 1000, NULL);	/* 设置日志更新定时器 */
+	AudioDeviceListUpdate();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -180,10 +175,6 @@ void CscreenrecoderDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 
-	/* 测试日志 */
-	ELOG_W("elog test: %s", "----------elog test----------");
-	av_log(NULL, AV_LOG_WARNING, "ffmpeg log test: %s", "----------av_log test-------");
-
 	switch (nIDEvent)
 	{
 		case TIMER_LOG_UPDATE:
@@ -208,6 +199,27 @@ void CscreenrecoderDlg::LogAreaUpdate()
 	m_logAreaCtrl.LineScroll(m_logAreaCtrl.GetLineCount());
 }
 
+void CscreenrecoderDlg::AudioDeviceListUpdate()
+{
+	UpdateData(TRUE);
+	m_audioDeviceCtrl.ResetContent();
+	CAudioRecorder audioRecorder;
+
+	m_audioDeviceVec = audioRecorder.getDeviceList();
+	if (m_audioDeviceVec.empty()) {
+		ELOG_W("===== Audio Input Device Not Found =====");
+		m_audioDeviceCtrl.AddString(_T("No Audio Input Device"));
+	} else {
+		wchar_t unicodestr[1024];
+		for (auto& it : m_audioDeviceVec) {
+			Ctool::getInstance()->convertANSIToUnicode(it.c_str(), unicodestr);
+			m_audioDeviceCtrl.AddString(unicodestr);
+		}
+	}
+	m_audioDeviceCtrl.SetCurSel(0);
+	UpdateData(FALSE);
+}
+
 
 void CscreenrecoderDlg::OnEnKillfocusEditLogarea()
 {
@@ -228,4 +240,18 @@ void CscreenrecoderDlg::OnBnClickedButtonCleanLog()
 	UpdateData(TRUE);
 	m_logAreaStr.Empty();
 	UpdateData(FALSE);
+}
+
+
+void CscreenrecoderDlg::OnBnClickedButtonRecord()
+{
+	// TODO: 在此添加控件通知处理程序代码
+
+}
+
+
+void CscreenrecoderDlg::OnBnClickedButtonRefresh()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	AudioDeviceListUpdate();
 }

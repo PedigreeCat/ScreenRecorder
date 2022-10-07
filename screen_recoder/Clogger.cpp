@@ -19,14 +19,19 @@ extern "C" {
 Clogger Clogger::m_instance;
 char Clogger::m_utf8_buf[];
 char Clogger::m_ansi_buf[];
+Clogger::FFmpegLogHook Clogger::m_ffmpegLogHook = nullptr;
+std::vector<std::string>* Clogger::m_logVec = nullptr;
 
 void Clogger::FFmpegLogCallback(void* ptr, int level, const char* format, va_list vl)
 {
 	(void)ptr;
-	/* ffmpeg中的日志位UTF-8编码，需要转换 */
+	(void)level;
+	/* ffmpeg中的日志为UTF-8编码，需要转换 */
 	vsprintf(m_utf8_buf, format, vl);
-	Ctool::getInstance()->convertUTF8toANSI(m_utf8_buf, m_ansi_buf);
-	getInstance()->writeLog2Cache("%s", m_ansi_buf);
+	Ctool::getInstance()->convertUTF8ToANSI(m_utf8_buf, m_ansi_buf);
+	if (m_ffmpegLogHook)
+		m_ffmpegLogHook(m_ansi_buf, m_logVec);
+	ELOG_D("%s", m_ansi_buf);
 }
 
 void Clogger::getLogCacheAndClean(std::string& str)

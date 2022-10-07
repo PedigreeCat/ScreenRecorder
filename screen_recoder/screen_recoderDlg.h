@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <vector>
+#include <string>
 
 // CscreenrecoderDlg 对话框
 class CscreenrecoderDlg : public CDialogEx
@@ -34,14 +36,20 @@ protected:
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 private:
-	void LogAreaUpdate();
+	void LogAreaUpdate();	/* 更新日志显示 */
+	void AudioDeviceListUpdate();	/* 更新音频输入设备列表 */
 
 private:
 	CEdit m_logAreaCtrl;
 	CString m_logAreaStr;
+	CComboBox m_audioDeviceCtrl;
+	std::vector<std::string> m_audioDeviceVec;	/* 音频输入设备列表 */
+
 	BOOL m_logAreaGetFocus;
 public:
 	afx_msg void OnEnKillfocusEditLogarea();
 	afx_msg void OnEnSetfocusEditLogarea();
 	afx_msg void OnBnClickedButtonCleanLog();
+	afx_msg void OnBnClickedButtonRecord();
+	afx_msg void OnBnClickedButtonRefresh();
 };

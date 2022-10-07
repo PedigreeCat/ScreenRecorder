@@ -100,3 +100,44 @@ void CscreenrecoderDlg::OnBnClickedButton1()
 
 > 由于FFmpeg日志为UTF8格式，想要在MFC程序中打印需要先转成ANSI格式。
 
+# 音频录制
+
+使用directShow进行音频采集，从音频输入设备采集音频，并将其保存到本地文件。
+
+## 需要提供的功能
+
+- 列举出可用音频输入设备列表的接口
+- 设置设备名称、设置PCM保存文件、设置编码后音频保存文件的接口
+- 可以选择音频编码格式(MP3或AAC)
+- 开始、停止录音的接口
+- 将音频数据保存到本地文件的功能
+
+## 获取音频输入设备列表
+
+ffmpeg使用dshow的命令行参数
+
+```shell
+# 列举dshow帮助
+ffmpeg -h demuxer=dshow
+
+# 获取设备列表
+ffmpeg -f dshow -list_devices true -i xx
+```
+
+>  由于dshow没有对应的get_device_list方法，通过阅读源码发现，只能通过dshow的AVOption去调用内部的dshow_cycle_devices接口获取设备列表；但是该函数只会将结果打在日志中，于是想通过从日志回调函数中去获取想要的结果。
+
+给日志回调函数添加设置hook接口，通过正则表达式将日志中的音频输入设备名取出，这部分需要阅读FFmpeg源码才能知晓。具体实现和源码位置写在代码注释中了。
+
+## 添加音频输入设备下拉框
+
+- 添加下拉框，用于列出和选择音频输入设备
+- 如果无音频输入设备，则下拉框显示为No Audio Input Device，并在日志窗口打印未找到音频输入设备
+- 在下拉框旁添加一个输入设备列表刷新按钮
+
+# 踩坑记录
+
+1. av_err2str中使用了复合字面量，但是VS默认使用C++规则编译，所以要么只在.c文件中使用，要么改用av_strerror。
+
+2. dshow的demuxer未提供get_device_list方法，所以无法通过avdevice_list_devices接口获取设备列表。
+
+
