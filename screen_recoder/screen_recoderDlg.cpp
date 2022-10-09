@@ -10,7 +10,6 @@
 
 #include "Clogger.h"
 #include "Ctool.h"
-#include "CAudioRecorder.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -119,6 +118,7 @@ BOOL CscreenrecoderDlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 	SetTimer(TIMER_LOG_UPDATE, 1000, NULL);	/* 设置日志更新定时器 */
 	AudioDeviceListUpdate();
+	static_cast<CButton*>(GetDlgItem(IDC_RADIO_SAVE_PCM_N))->SetCheck(TRUE);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -246,7 +246,31 @@ void CscreenrecoderDlg::OnBnClickedButtonCleanLog()
 void CscreenrecoderDlg::OnBnClickedButtonRecord()
 {
 	// TODO: 在此添加控件通知处理程序代码
-
+	CString buttonStr;
+	GetDlgItemText(IDC_BUTTON_RECORD, buttonStr);
+	if (buttonStr == _T("Start Record")) {
+		SetDlgItemText(IDC_BUTTON_RECORD, _T("Stop Record"));
+		m_audioRecorderObj = new CAudioRecorder();
+		if (m_audioRecorderObj) {
+			m_audioDeviceCtrl.GetItemData(0);
+			CString devicename_wchar;
+			char devicename_ansi[1024];
+			m_audioDeviceCtrl.GetLBText(0, devicename_wchar);
+			Ctool::getInstance()->convertUnicodeToANSI(devicename_wchar, devicename_ansi);
+			m_audioRecorderObj->setDevice(devicename_ansi);
+			if (static_cast<CButton*>(GetDlgItem(IDC_RADIO_SAVE_PCM_Y))->GetCheck())
+				m_audioRecorderObj->setDumpPCM("dumpData.pcm");
+			m_audioRecorderObj->startRecord();
+		}
+			
+	}
+	else {
+		SetDlgItemText(IDC_BUTTON_RECORD, _T("Start Record"));
+		if (m_audioRecorderObj) {
+			m_audioRecorderObj->stopRecord();
+			delete m_audioRecorderObj;
+		}
+	}
 }
 
 

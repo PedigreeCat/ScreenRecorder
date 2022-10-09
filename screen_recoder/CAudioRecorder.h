@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,32 +30,46 @@ public:
 	void setDumpAudioData(const std::string& filepath);
 	std::vector<std::string> getDeviceList();
 	int startRecord();
-	//void stopRecord();
+	void stopRecord();
 
+	/* 音频录制线程 */
+	static void worker(CAudioRecorder& recorder);
+	/* 保存PCM数据 */
+	static void dumpPCM(CAudioRecorder& recorder, AVPacket* packet);
 
 public:
 	enum error_code {
 		ERR_SUCCESS		=	0,
-		ERR_OPEN_DEVICE	=	1,
-		ERR_ALLOC_RES	=	2,
-		ERR_RESAMPLE	=	3,
-		ERR_ENCODE		=	4
+		ERR_OPEN_DEVICE_FAIL,
+		ERR_ALLOC_RES,
+		ERR_RESAMPLE_FAIL,
+		ERR_ENCODE_FAIL
 	};
 
 private:
 	//void getDeviceList();
 	void dumpErr(int err);
 	int openDevice();
+	void closeDevice();
+	int initResampleCtx();
+	int initEncoderCtx();
+	int releaseAllCtx();
 
 private:
 	std::string	m_devicename;
 	std::string	m_pcm_filename;
 	std::string	m_audio_filename;
 
+	std::ofstream m_pcm_file;
+	std::ofstream m_audio_file;
+
 	/* ffmpeg context */
 	AVFormatContext*	m_inputFormatCtx;
 	AVCodecContext*		m_encoderCtx;
 	SwrContext*			m_resampleCtx;
+
+	bool m_recording;
+	bool m_pause;
 
 	char *m_errBuf;
 };
