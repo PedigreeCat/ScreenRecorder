@@ -122,6 +122,9 @@ ffmpeg -h demuxer=dshow
 
 # 获取设备列表
 ffmpeg -f dshow -list_devices true -i xx
+
+# 测试录制音频，命令中的音频设备名字是我使用的
+ffmpeg -f dshow -i audio="麦克风 (HECATE G2 GAMING HEADSET)" -sample_rate 16000 -sample_size 16 -channels 2 dumpData.pcm -v debug
 ```
 
 >  由于dshow没有对应的get_device_list方法，通过阅读源码发现，只能通过dshow的AVOption去调用内部的dshow_cycle_devices接口获取设备列表；但是该函数只会将结果打在日志中，于是想通过从日志回调函数中去获取想要的结果。
@@ -144,11 +147,32 @@ ffmpeg -f dshow -list_devices true -i xx
    ffplay -ar 48000 -ac 2 -f s16le dumpData.pcm
    ```
 
-   
+3. 无论音采样率、采样位数、声道数如何设置每次音采集包的大小为88200，这个长度取决于硬件。
+
+4. 原始PCM的采样点数计算
+
+```
+int inSampleNum = packet->size / audio_channels / av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+```
+
+5. 重采样点后的采样点数计算（向上取整）
+
+```
+int outSampleNum = av_rescale_rnd(inSampleNum, audio_sample_rate, audio_sample_rate, AV_ROUND_UP);
+```
+
+6. 重采样缓存区大小计算
+
+```
+av_samples_alloc_array_and_samples(&m_swrOutData, &m_swrOutDataLinesize,
+					audio_channels, m_swrOutSampleNum, AV_SAMPLE_FMT_FLTP, 0)
+```
+
+7. 重采样为FLTP格式后由于是planner格式，保存文件时只能存储单个声道。
 
 # 踩坑记录
 
-1. av_err2str中使用了复合字面量，但是VS默认使用C++规则编译，所以要么只在.c文件中使用，要么改用av_strerror。
+1. av_err2str中使用了复合字面量（C99标准），但是VS默认使用C++规则编译，所以要么只在.c文件中使用，要么改用av_strerror。
 
 2. dshow的demuxer未提供get_device_list方法，所以无法通过avdevice_list_devices接口获取设备列表。
 

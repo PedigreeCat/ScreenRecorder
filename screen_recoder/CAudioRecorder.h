@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <thread>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,20 +36,20 @@ public:
 	/* 音频录制线程 */
 	static void worker(CAudioRecorder& recorder);
 	/* 保存PCM数据 */
-	static void dumpPCM(CAudioRecorder& recorder, AVPacket* packet);
+	void dumpPCM(void);
+	void resample(AVPacket* packet);
 
 public:
 	enum error_code {
 		ERR_SUCCESS		=	0,
 		ERR_OPEN_DEVICE_FAIL,
-		ERR_ALLOC_RES,
+		ERR_ALLOC_RES_FAIL,
 		ERR_RESAMPLE_FAIL,
 		ERR_ENCODE_FAIL
 	};
 
 private:
 	//void getDeviceList();
-	void dumpErr(int err);
 	int openDevice();
 	void closeDevice();
 	int initResampleCtx();
@@ -63,14 +64,18 @@ private:
 	std::ofstream m_pcm_file;
 	std::ofstream m_audio_file;
 
+	std::thread m_worker;
+
 	/* ffmpeg context */
 	AVFormatContext*	m_inputFormatCtx;
 	AVCodecContext*		m_encoderCtx;
-	SwrContext*			m_resampleCtx;
+	SwrContext*			m_swrCtx;
+
+	uint8_t**			m_swrOutData;
+	int					m_swrOutSampleNum;
+	int					m_swrOutDataLinesize;
 
 	bool m_recording;
 	bool m_pause;
-
-	char *m_errBuf;
 };
 

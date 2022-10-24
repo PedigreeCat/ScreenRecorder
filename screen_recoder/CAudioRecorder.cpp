@@ -1,19 +1,23 @@
 #include <regex>
-#include <thread>
 #include "CAudioRecorder.h"
 #include "Clogger.h"
 #include "Ctool.h"
 
-#define MAX_ERR_BUF_SIZE	AV_ERROR_MAX_STRING_SIZE
+constexpr int audio_sample_size = 16;
+constexpr int audio_sample_rate = 48000;
+constexpr int audio_channels = 2;
 
 CAudioRecorder::CAudioRecorder()
 	: m_inputFormatCtx(NULL)
 	, m_encoderCtx(NULL)
-	, m_resampleCtx(NULL)
+	, m_swrCtx(NULL)
+	, m_swrOutData(NULL)
+	, m_swrOutSampleNum(0)
+	, m_swrOutDataLinesize(0)
 	, m_recording(false)
 	, m_pause(false)
+	, m_worker()
 {
-	m_errBuf = new char[MAX_ERR_BUF_SIZE];
 	/* register all devicde and codec */
 	avdevice_register_all();
 	avcodec_register_all();
@@ -23,7 +27,7 @@ CAudioRecorder::CAudioRecorder()
 
 CAudioRecorder::~CAudioRecorder()
 {
-	delete[] m_errBuf;
+	releaseAllCtx();
 }
 
 void CAudioRecorder::setDevice(const std::string& devicename)
@@ -54,8 +58,7 @@ std::vector<std::string> CAudioRecorder::getDeviceList()
 	bool findAudioFlag = false;
 
 	if (ret = av_dict_set(&tmpDict, "list_devices", "true", 0) < 0) {
-		dumpErr(ret);
-		ELOG_E("av_dict_set failed: [%d](%s)", AVERROR(ret), m_errBuf);
+		DUMP_ERR("av_dict_set failed", ret);
 		goto free_resource;
 	}
 
@@ -97,19 +100,19 @@ free_resource:
 int CAudioRecorder::startRecord()
 {
 	openDevice();
+	initResampleCtx();
 	m_recording = true;
-	std::thread recordThread(worker, std::ref(*this));
-	recordThread.detach();
+	m_worker = std::thread(worker, std::ref(*this));
+
 	return ERR_SUCCESS;
 }
 
 void CAudioRecorder::stopRecord()
 {
 	m_recording = false;
+	m_worker.join();
 	if (m_inputFormatCtx)
 		avformat_close_input(&m_inputFormatCtx);
-	if (m_pcm_file.is_open())
-		m_pcm_file.close();
 }
 
 void CAudioRecorder::worker(CAudioRecorder& recorder)
@@ -126,11 +129,15 @@ void CAudioRecorder::worker(CAudioRecorder& recorder)
 
 	/* 主循环 */
 	while (recorder.m_recording) {
-		if (ret = av_read_frame(recorder.m_inputFormatCtx, packet) != 0) {
-			recorder.dumpErr(ret);
-			ELOG_E("av_read_frame failed: [%d](%s)", AVERROR(ret), recorder.m_errBuf);
-		}
-		dumpPCM(recorder, packet);
+		/* 采集数据 */
+		if (ret = av_read_frame(recorder.m_inputFormatCtx, packet) != 0)
+			DUMP_ERR("av_read_frame failed", ret);
+		/* 重采样，设备采集的音频采样格式是S16，需要转成AAC支持的FLTP */
+		ELOG_D("av_read_frame read packet.size: %d", packet->size);
+		recorder.resample(packet);
+
+		/* 将重采样后PCM数据写到文件中 */
+		recorder.dumpPCM();
 	}
 end:
 	if (packet)
@@ -138,20 +145,40 @@ end:
 	ELOG_I("audio recorder worker end");
 }
 
-void CAudioRecorder::dumpPCM(CAudioRecorder& recorder, AVPacket* packet)
+void CAudioRecorder::dumpPCM(void)
 {
-	if (recorder.m_pcm_filename.empty())
+	if (m_pcm_filename.empty())
 		return;
-	if (!recorder.m_pcm_file.is_open()) {
-		recorder.m_pcm_file.open(recorder.m_pcm_filename,
+	if (!m_pcm_file.is_open()) {
+		m_pcm_file.open(m_pcm_filename,
 			std::ios_base::out | std::ios_base::binary);
 	}
-	recorder.m_pcm_file.write((char*)packet->data, packet->size);
+	m_pcm_file.write((char*)m_swrOutData[1], m_swrOutDataLinesize);
 }
 
-void CAudioRecorder::dumpErr(int err)
+void CAudioRecorder::resample(AVPacket* packet)
 {
-	av_strerror(err, m_errBuf, MAX_ERR_BUF_SIZE);
+	int ret = 0;
+	uint8_t* src_data[4] = { 0 };
+	src_data[0] = packet->data;
+	/* 计算采样点数 */
+	int inSampleNum = packet->size / audio_channels / av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+	int outSampleNum = av_rescale_rnd(inSampleNum, audio_sample_rate, audio_sample_rate, AV_ROUND_UP);
+	/* 更新重采样输出缓存区 */
+	if (outSampleNum > m_swrOutSampleNum) {
+		m_swrOutSampleNum = outSampleNum;
+		if (m_swrOutData) {
+			av_freep(&m_swrOutData[0]);
+			av_freep(&m_swrOutData);
+		}
+		if (ret = av_samples_alloc_array_and_samples(&m_swrOutData, &m_swrOutDataLinesize,
+					audio_channels, m_swrOutSampleNum, AV_SAMPLE_FMT_FLTP, 0) < 0)
+			DUMP_ERR("av_samples_alloc_array_and_samples failed", ret);
+	}
+
+	if (ret = swr_convert(m_swrCtx, m_swrOutData, m_swrOutSampleNum, (const uint8_t**)src_data, inSampleNum) < 0)
+		DUMP_ERR("swr_convert failed", ret);
+	return;
 }
 
 int CAudioRecorder::openDevice()
@@ -164,9 +191,9 @@ int CAudioRecorder::openDevice()
 		goto end;
 	}
 
-	av_dict_set(&tmpDict, "sample_rate", "48000", 0);
-	av_dict_set(&tmpDict, "sample_size", "16", 0);
-	av_dict_set(&tmpDict, "channels", "2", 0);
+	av_dict_set_int(&tmpDict, "sample_rate", audio_sample_rate, 0);
+	av_dict_set_int(&tmpDict, "sample_size", audio_sample_size, 0);
+	av_dict_set_int(&tmpDict, "channels", audio_channels, 0);
 
 	AVInputFormat* inFmt = av_find_input_format(short_name);
 	if (!inFmt) {
@@ -175,8 +202,7 @@ int CAudioRecorder::openDevice()
 	}
 	/* 打开音频输入设备，此时已经开始在采集音频数据了 */
 	if (ret = avformat_open_input(&m_inputFormatCtx, m_devicename.c_str(), inFmt, NULL) < 0) {
-		dumpErr(ret);
-		ELOG_E("avformat_open_input failed: [%d](%s)", AVERROR(ret), m_errBuf);
+		DUMP_ERR("avformat_open_input failed", ret);
 		goto end;
 	}
 	return ERR_SUCCESS;
@@ -188,6 +214,19 @@ end:
 
 int CAudioRecorder::initResampleCtx()
 {
+	int ret = 0;
+	m_swrCtx = swr_alloc_set_opts(NULL,
+		AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_FLTP, audio_sample_rate, /* output PCM params */
+		AV_CH_LAYOUT_STEREO, AV_SAMPLE_FMT_S16, audio_sample_rate,	/* input PCM params */
+		0, NULL);
+	if (NULL == m_swrCtx) {
+		ELOG_E("swr_alloc_set_opts failed");
+		return ERR_ALLOC_RES_FAIL;
+	}
+	if (ret = swr_init(m_swrCtx) < 0) {
+		DUMP_ERR("swr_init failed", ret);
+		return ERR_ALLOC_RES_FAIL;
+	}
 	return 0;
 }
 
@@ -200,10 +239,15 @@ int CAudioRecorder::releaseAllCtx()
 {
 	if (m_inputFormatCtx)
 		avformat_close_input(&m_inputFormatCtx);
-	if (m_resampleCtx)
-		swr_free(&m_resampleCtx);
+	if (m_swrCtx)
+		swr_free(&m_swrCtx);
 	if (m_encoderCtx)
 		avcodec_free_context(&m_encoderCtx);
+	if (m_swrOutData) {
+		av_freep(&m_swrOutData[0]);
+	}
+	if (m_pcm_file.is_open())
+		m_pcm_file.close();
 	return 0;
 }
 

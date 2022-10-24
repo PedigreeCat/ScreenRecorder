@@ -6,6 +6,15 @@
 #include <stdarg.h>
 #include "elog.h"
 
+/* 重新定义函数宏 */
+#define ELOG_A(...)    log_a(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
+#define ELOG_E(...)    log_e(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
+#define ELOG_W(...)    log_w(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
+#define ELOG_I(...)    log_i(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
+#define ELOG_D(...)    log_d(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
+
+#define DUMP_ERR(str, err)	ELOG_E(str " [%d](%s)", AVERROR(err), Clogger::getInstance()->dumpErr(err)) 
+
 /*
 * 用于将应用日志以及FFmpeg内部日志输出到日志文件和对话框中
 * 单例模式（饿汉模式）
@@ -38,6 +47,7 @@ public:
 
 	void getLogCacheAndClean(std::string& str);
 	void writeLog2Cache(const char* format, ...);
+	const char* dumpErr(int err);
 
 private:
 	Clogger();
@@ -50,16 +60,8 @@ private:
 private:
 	char* m_cache_buf;
 	char* m_cache_pos;
-	static char m_utf8_buf[2048];	/* 用于暂存ffmpeg中的utf8日志 */
-	static char m_ansi_buf[2048];	/* 用于暂存转换后的 ansi日志 */
 	static Clogger m_instance;
 	static FFmpegLogHook m_ffmpegLogHook;		/* ffmpeg日志回调函数中的钩子函数 */
 	static std::vector<std::string>* m_logVec;	/* 用于保存ffmpeg日志的数组 */
 };
 
-/* 重新定义函数宏 */
-#define ELOG_A(...)    log_a(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
-#define ELOG_E(...)    log_e(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
-#define ELOG_W(...)    log_w(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
-#define ELOG_I(...)    log_i(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
-#define ELOG_D(...)    log_d(__VA_ARGS__), Clogger::getInstance()->writeLog2Cache(__VA_ARGS__)
