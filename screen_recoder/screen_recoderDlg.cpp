@@ -119,6 +119,7 @@ BOOL CscreenrecoderDlg::OnInitDialog()
 	SetTimer(TIMER_LOG_UPDATE, 1000, NULL);	/* 设置日志更新定时器 */
 	AudioDeviceListUpdate();
 	static_cast<CButton*>(GetDlgItem(IDC_RADIO_SAVE_PCM_N))->SetCheck(TRUE);
+	static_cast<CButton*>(GetDlgItem(IDC_RADIO_SAVE_AUDIO_Y))->SetCheck(TRUE);
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -250,9 +251,10 @@ void CscreenrecoderDlg::OnBnClickedButtonRecord()
 	GetDlgItemText(IDC_BUTTON_RECORD, buttonStr);
 	if (buttonStr == _T("Start Record")) {
 		SetDlgItemText(IDC_BUTTON_RECORD, _T("Stop Record"));
+
 		m_audioRecorderObj = new CAudioRecorder();
 		if (m_audioRecorderObj) {
-			m_audioDeviceCtrl.GetItemData(0);
+			/* 获取下拉框中音频设备名称 */
 			CString devicename_wchar;
 			char devicename_ansi[1024];
 			m_audioDeviceCtrl.GetLBText(0, devicename_wchar);
@@ -260,6 +262,8 @@ void CscreenrecoderDlg::OnBnClickedButtonRecord()
 			m_audioRecorderObj->setDevice(devicename_ansi);
 			if (static_cast<CButton*>(GetDlgItem(IDC_RADIO_SAVE_PCM_Y))->GetCheck())
 				m_audioRecorderObj->setDumpPCM("dumpData.pcm");
+			if (static_cast<CButton*>(GetDlgItem(IDC_RADIO_SAVE_AUDIO_Y))->GetCheck())
+				m_audioRecorderObj->setDumpAudioData("dumpAudio.aac");
 			m_audioRecorderObj->startRecord();
 		}
 			

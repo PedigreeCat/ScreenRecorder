@@ -21,6 +21,13 @@ extern "C" {
 class CAudioRecorder
 {
 public:
+	struct SwrBuffer {
+		uint8_t** data;
+		int linesize;
+		int	nb_samples;
+		SwrBuffer() :data(NULL),linesize(0),nb_samples(0) {}
+	};
+public:
 	CAudioRecorder();
 	~CAudioRecorder();
 	CAudioRecorder(const CAudioRecorder&) = delete;
@@ -35,13 +42,11 @@ public:
 
 	/* 音频录制线程 */
 	static void worker(CAudioRecorder& recorder);
-	/* 保存PCM数据 */
-	void dumpPCM(void);
-	void resample(AVPacket* packet);
 
 public:
 	enum error_code {
 		ERR_SUCCESS		=	0,
+		ERR_FIND_RES_FAIL,/* 查找资源失败 */
 		ERR_OPEN_DEVICE_FAIL,
 		ERR_ALLOC_RES_FAIL,
 		ERR_RESAMPLE_FAIL,
@@ -55,6 +60,12 @@ private:
 	int initResampleCtx();
 	int initEncoderCtx();
 	int releaseAllCtx();
+
+	/* 保存PCM数据 */
+	void dumpPCM(AVPacket* pkt);
+	void dumpAudio(AVPacket* pkt);
+	void resample(AVPacket* packet, SwrBuffer* buf);
+	void encode(AVFrame* frame, AVPacket* packet);
 
 private:
 	std::string	m_devicename;
@@ -70,10 +81,6 @@ private:
 	AVFormatContext*	m_inputFormatCtx;
 	AVCodecContext*		m_encoderCtx;
 	SwrContext*			m_swrCtx;
-
-	uint8_t**			m_swrOutData;
-	int					m_swrOutSampleNum;
-	int					m_swrOutDataLinesize;
 
 	bool m_recording;
 	bool m_pause;

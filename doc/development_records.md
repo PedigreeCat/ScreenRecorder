@@ -124,7 +124,7 @@ ffmpeg -h demuxer=dshow
 ffmpeg -f dshow -list_devices true -i xx
 
 # 测试录制音频，命令中的音频设备名字是我使用的
-ffmpeg -f dshow -i audio="麦克风 (HECATE G2 GAMING HEADSET)" -sample_rate 16000 -sample_size 16 -channels 2 dumpData.pcm -v debug
+ffmpeg -f dshow -i audio="麦克风 (HECATE G2 GAMING HEADSET)" -sample_rate 16000 -sample_size 16 -channels 2 -f s16le dumpData.pcm -v debug
 ```
 
 >  由于dshow没有对应的get_device_list方法，通过阅读源码发现，只能通过dshow的AVOption去调用内部的dshow_cycle_devices接口获取设备列表；但是该函数只会将结果打在日志中，于是想通过从日志回调函数中去获取想要的结果。
@@ -169,6 +169,29 @@ av_samples_alloc_array_and_samples(&m_swrOutData, &m_swrOutDataLinesize,
 ```
 
 7. 重采样为FLTP格式后由于是planner格式，保存文件时只能存储单个声道。
+
+## 音频编码
+
+AAC每次编码时对音频帧每个通道的采样点数有限制，在创建编码器后，可以通过codec_ctx->frame_size获取到，例如AAC是1024个。
+
+分配AVFrame下的date和linesize
+
+```
+frame->nb_samples = recorder.m_encoderCtx->frame_size;
+frame->format = AV_SAMPLE_FMT_FLTP;
+frame->channel_layout = AV_CH_LAYOUT_STEREO;
+av_frame_get_buffer(frame, 0);
+```
+
+将根据采样点数、采样格式、通道布局分配空间，并为frame.data填充每个planner的地址，为frame.linesize[0]填写每个planner的数据长度。
+
+### 编码器初始化
+
+以下内容需要阅读源码了解
+
+- ffmpeg内部在调用libfdk_aac的API限制了sample_fmt为S16
+- 如果编译ffmpeg时没有使用libfdk_aac，将使用ffmpeg内置的AAC编码器，fmt只能设置为FLTP
+- encode_ctx.bit_rate设置为0时，会更具当前encode_ctx.profile去设置bit_rate
 
 # 踩坑记录
 
