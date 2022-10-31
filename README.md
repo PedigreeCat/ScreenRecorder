@@ -1,4 +1,4 @@
-# ScreenRecoder
+# ScreenRecorder
 基于MFC对话框程序和FFmpeg开发的一个录屏工具。
 
 # TodoList
