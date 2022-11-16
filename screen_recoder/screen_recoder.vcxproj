@@ -99,7 +99,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(SolutionDir)dependence\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>avcodec.lib;avutil.lib;avdevice.lib;avformat.lib;swresample.lib</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avutil.lib;avdevice.lib;avformat.lib;swresample.lib;swscale.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -180,7 +180,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)dependence\ffmpeg\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>avcodec.lib;avutil.lib;avdevice.lib;avformat.lib;swresample.lib</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avutil.lib;avdevice.lib;avformat.lib;swresample.lib;swscale.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -202,6 +202,7 @@
     <ClInclude Include="..\dependence\easylogger\plugins\file\elog_file.h" />
     <ClInclude Include="..\dependence\easylogger\plugins\file\elog_file_cfg.h" />
     <ClInclude Include="CAudioRecorder.h" />
+    <ClInclude Include="CDeskRecorder.h" />
     <ClInclude Include="Clogger.h" />
     <ClInclude Include="Ctool.h" />
     <ClInclude Include="framework.h" />
@@ -218,6 +219,7 @@
     <ClCompile Include="..\dependence\easylogger\src\elog.c" />
     <ClCompile Include="..\dependence\easylogger\src\elog_utils.c" />
     <ClCompile Include="CAudioRecorder.cpp" />
+    <ClCompile Include="CDeskRecorder.cpp" />
     <ClCompile Include="Clogger.cpp" />
     <ClCompile Include="Ctool.cpp" />
     <ClCompile Include="pch.cpp">
@@ -233,6 +235,7 @@
     <ResourceCompile Include="screenrecoder.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="res\screenrecoder.rc2" />
   </ItemGroup>
   <ItemGroup>

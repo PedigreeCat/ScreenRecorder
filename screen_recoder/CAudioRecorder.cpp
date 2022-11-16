@@ -4,7 +4,7 @@
 #include "Ctool.h"
 
 constexpr int audio_sample_size = 16;
-constexpr int audio_sample_rate = 48000;
+constexpr int audio_sample_rate = 44100;
 constexpr int audio_channels = 2;
 
 #define ADTS_HEADER_LEN (7)
@@ -58,12 +58,10 @@ CAudioRecorder::CAudioRecorder()
 	, m_encoderCtx(NULL)
 	, m_swrCtx(NULL)
 	, m_recording(false)
-	, m_pause(false)
 	, m_worker()
 {
 	/* register all devicde and codec */
 	avdevice_register_all();
-	avcodec_register_all();
 
 	return;
 }
@@ -91,7 +89,7 @@ void CAudioRecorder::setDumpAudioData(const std::string& filepath)
 	m_audio_filename = filepath;
 }
 
-std::vector<std::string> CAudioRecorder::getDeviceList()
+std::vector<std::string> CAudioRecorder::getDeviceList() &
 {
 	int ret = 0;
 	AVFormatContext* tmpFormatCtx = NULL;
@@ -108,24 +106,25 @@ std::vector<std::string> CAudioRecorder::getDeviceList()
 	Clogger::getInstance()->setFFmpegLogHook([&findAudioFlag](const char* log, std::vector<std::string>* logList)->void
 		{
 			bool ret = false;
-			/* 通过正则表达式将日志中的音频设备名过滤出来，
-			   这部分内容需要阅读源码libavdevice/dshow.c才能知道 */
+	/* 通过正则表达式将日志中的音频设备名过滤出来，
+	   这部分内容需要阅读源码libavdevice/dshow.c才能知道 */
 
-			/* libavdevice/dshow.c:dshow_read_header，在打印音频输入设备前会先打印"DirectShow audio devices\n" */
-			std::regex reg_audio_device_start("DirectShow audio devices\n");
-			/* libavdevice/dshow.c:dshow_cycle_devices，这条这则表达式是根据日志打印内容编写的，匹配"设备名 (设备描述)"格式的字符串 */
-			std::regex reg_audio_device_name("^\\s*\\\"(.+\\(.+\\))\\\"\n$");
-			std::cmatch match_list;	/* 结果存储为C字符串数组 */
-			if (!findAudioFlag) {
-				ret = std::regex_match(log, reg_audio_device_start);
-				if (ret)
-					findAudioFlag = true;
-			} else {
-				ret = std::regex_match(log, match_list, reg_audio_device_name);
-				if (ret)
-					logList->push_back(std::string(match_list[1]));
-			}
-		}, 
+	   /* libavdevice/dshow.c:dshow_read_header，在打印音频输入设备前会先打印"DirectShow audio devices\n" */
+	std::regex reg_audio_device_start("DirectShow audio devices\n");
+	/* libavdevice/dshow.c:dshow_cycle_devices，这条这则表达式是根据日志打印内容编写的，匹配"设备名 (设备描述)"格式的字符串 */
+	std::regex reg_audio_device_name("^\\s*\\\"(.+\\(.+\\))\\\"\n$");
+	std::cmatch match_list;	/* 结果存储为C字符串数组 */
+	if (!findAudioFlag) {
+		ret = std::regex_match(log, reg_audio_device_start);
+		if (ret)
+			findAudioFlag = true;
+	}
+	else {
+		ret = std::regex_match(log, match_list, reg_audio_device_name);
+		if (ret)
+			logList->push_back(std::string(match_list[1]));
+	}
+		},
 		&logVec);
 	(void)avformat_open_input(&tmpFormatCtx, NULL, inputFormatCtx, &tmpDict);
 	/* 音频输入设备列表获取完后清空钩子函数 */
@@ -325,18 +324,20 @@ int CAudioRecorder::openDevice()
 	AVInputFormat* inFmt = av_find_input_format(short_name);
 	if (!inFmt) {
 		ELOG_E("Not found inputFormat: %s", short_name);
+		ret = ERR_OPEN_DEVICE_FAIL;
 		goto end;
 	}
 	/* 打开音频输入设备，此时已经开始在采集音频数据了 */
-	if (ret = avformat_open_input(&m_inputFormatCtx, m_devicename.c_str(), inFmt, NULL) < 0) {
+	if (ret = avformat_open_input(&m_inputFormatCtx, m_devicename.c_str(), inFmt, &tmpDict) < 0) {
 		DUMP_ERR("avformat_open_input failed", ret);
+		ret = ERR_OPEN_DEVICE_FAIL;
 		goto end;
 	}
-	return ERR_SUCCESS;
+
 end:
 	if (tmpDict)
 		av_dict_free(&tmpDict);
-	return ERR_OPEN_DEVICE_FAIL;
+	return ret;
 }
 
 int CAudioRecorder::initResampleCtx()
@@ -360,7 +361,7 @@ int CAudioRecorder::initResampleCtx()
 int CAudioRecorder::initEncoderCtx()
 {
 	int ret = 0;
-	AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
+	const AVCodec* codec = avcodec_find_encoder(AV_CODEC_ID_AAC);
 	if (NULL == codec) {
 		ELOG_E("avcodec_find_encoder failed.");
 		return ERR_FIND_RES_FAIL;
@@ -387,7 +388,7 @@ int CAudioRecorder::initEncoderCtx()
 	return ERR_SUCCESS;
 }
 
-int CAudioRecorder::releaseAllCtx()
+void CAudioRecorder::releaseAllCtx()
 {
 	if (m_inputFormatCtx)
 		avformat_close_input(&m_inputFormatCtx);
@@ -395,7 +396,6 @@ int CAudioRecorder::releaseAllCtx()
 		swr_free(&m_swrCtx);
 	if (m_encoderCtx)
 		avcodec_free_context(&m_encoderCtx);
-	return 0;
 }
 
 void CAudioRecorder::closeDevice()

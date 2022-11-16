@@ -23,8 +23,6 @@ std::vector<std::string>* Clogger::m_logVec = nullptr;
 
 void Clogger::FFmpegLogCallback(void* ptr, int level, const char* format, va_list vl)
 {
-	(void)ptr;
-	(void)level;
 	static char utf8_buf[CONVERT_BUF_SIZE] = {0};
 	static char ansi_buf[CONVERT_BUF_SIZE] = {0};
 	/* ffmpeg中的日志为UTF-8编码，需要转换 */

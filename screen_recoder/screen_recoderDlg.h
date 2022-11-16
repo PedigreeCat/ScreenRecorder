@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include "CAudioRecorder.h"
+#include "CDeskRecorder.h"
 
 // CscreenrecoderDlg 对话框
 class CscreenrecoderDlg : public CDialogEx
@@ -52,6 +53,7 @@ private:
 
 	std::vector<std::string> m_audioDeviceVec;	/* 音频输入设备列表 */
 	CAudioRecorder* m_audioRecorderObj;
+	CDeskRecorder* m_deskRecorderObj;
 
 	BOOL m_logAreaGetFocus;
 };

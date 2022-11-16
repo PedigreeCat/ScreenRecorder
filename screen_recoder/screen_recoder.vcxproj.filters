@@ -60,6 +60,9 @@
     <ClInclude Include="CAudioRecorder.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CDeskRecorder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="screen_recoder.cpp">
@@ -95,6 +98,9 @@
     <ClCompile Include="CAudioRecorder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="CDeskRecorder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="screenrecoder.rc">
@@ -105,6 +111,7 @@
     <None Include="res\screenrecoder.rc2">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\screen_recoder.ico">

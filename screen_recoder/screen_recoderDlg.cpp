@@ -252,7 +252,7 @@ void CscreenrecoderDlg::OnBnClickedButtonRecord()
 	if (buttonStr == _T("Start Record")) {
 		SetDlgItemText(IDC_BUTTON_RECORD, _T("Stop Record"));
 
-		m_audioRecorderObj = new CAudioRecorder();
+		//m_audioRecorderObj = new CAudioRecorder();
 		if (m_audioRecorderObj) {
 			/* 获取下拉框中音频设备名称 */
 			CString devicename_wchar;
@@ -266,6 +266,12 @@ void CscreenrecoderDlg::OnBnClickedButtonRecord()
 				m_audioRecorderObj->setDumpAudioData("dumpAudio.aac");
 			m_audioRecorderObj->startRecord();
 		}
+
+		m_deskRecorderObj = new CDeskRecorder();
+		if (m_deskRecorderObj) {
+			m_deskRecorderObj->setDumpH264("dumpVideo.h264");
+			m_deskRecorderObj->startRecord();
+		}
 			
 	}
 	else {
@@ -273,6 +279,10 @@ void CscreenrecoderDlg::OnBnClickedButtonRecord()
 		if (m_audioRecorderObj) {
 			m_audioRecorderObj->stopRecord();
 			delete m_audioRecorderObj;
+		}
+		if (m_deskRecorderObj) {
+			m_deskRecorderObj->stopRecord();
+			delete m_deskRecorderObj;
 		}
 	}
 }

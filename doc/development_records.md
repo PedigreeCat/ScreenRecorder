@@ -123,8 +123,11 @@ ffmpeg -h demuxer=dshow
 # 获取设备列表
 ffmpeg -f dshow -list_devices true -i xx
 
+# 查看支持的规格
+ffmpeg -f dshow -list_options true -i audio="麦克风 (HECATE G2 GAMING HEADSET)"
+
 # 测试录制音频，命令中的音频设备名字是我使用的
-ffmpeg -f dshow -i audio="麦克风 (HECATE G2 GAMING HEADSET)" -sample_rate 16000 -sample_size 16 -channels 2 -f s16le dumpData.pcm -v debug
+ffmpeg -f dshow -sample_rate 44100 -sample_size 16 -channels 2 -i audio="麦克风 (HECATE G2 GAMING HEADSET)" dumpData.pcm
 ```
 
 >  由于dshow没有对应的get_device_list方法，通过阅读源码发现，只能通过dshow的AVOption去调用内部的dshow_cycle_devices接口获取设备列表；但是该函数只会将结果打在日志中，于是想通过从日志回调函数中去获取想要的结果。
@@ -141,10 +144,10 @@ ffmpeg -f dshow -i audio="麦克风 (HECATE G2 GAMING HEADSET)" -sample_rate 160
 
 1. 将录制流程与主线程分离开，开始录制接口只进行资源初始化，实际录制放在子线程中进行；
 
-2. 将采集参数指定为双声道、48KHz采样率、采样位深16位，播放PCM时使用以下命令
+2. 将采集参数指定为双声道、44.1KHz采样率、采样位深16位，播放PCM时使用以下命令
 
    ```
-   ffplay -ar 48000 -ac 2 -f s16le dumpData.pcm
+   ffplay -ar 44100 -ac 2 -f s16le dumpData.pcm
    ```
 
 3. 无论音采样率、采样位数、声道数如何设置每次音采集包的大小为88200，这个长度取决于硬件。
@@ -192,6 +195,28 @@ av_frame_get_buffer(frame, 0);
 - ffmpeg内部在调用libfdk_aac的API限制了sample_fmt为S16
 - 如果编译ffmpeg时没有使用libfdk_aac，将使用ffmpeg内置的AAC编码器，fmt只能设置为FLTP
 - encode_ctx.bit_rate设置为0时，会更具当前encode_ctx.profile去设置bit_rate
+
+# 屏幕录制
+
+使用由于使用DirectShow录制需要下载screen capture recorder实现，这里使用gdigrab去实现。
+
+目标：将采集到的视频按照YUV420P存储，并编码为H.264格式。
+
+## 使用ffmpeg录制整个屏幕
+
+ffmpeg使用gdigrab的命令行参数
+
+```
+# 列举gdigrab帮助
+ffmpeg -h demuxer=gdigrab
+
+# 测试录制桌面，默认录制整个桌面，多个屏幕会进行拼接
+ffmpeg -f gdigrab -framerate 30 -i desktop out.yuv
+```
+
+gdigrab采集到的数据是RGBA格式，需要转换为YUV420P再进行编码。
+
+ffmpeg源码中没有H.264与H.265的软件编码器，需要使用xlib264和xlib265。
 
 # 踩坑记录
 

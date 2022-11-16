@@ -32,11 +32,13 @@ public:
 	~CAudioRecorder();
 	CAudioRecorder(const CAudioRecorder&) = delete;
 	CAudioRecorder& operator =(const CAudioRecorder&) = delete;
+	CAudioRecorder(const CAudioRecorder&&) = delete;
+	CAudioRecorder& operator =(const CAudioRecorder&&) = delete;
 
 	void setDevice(const std::string& devicename);
 	void setDumpPCM(const std::string &filepath);
 	void setDumpAudioData(const std::string& filepath);
-	std::vector<std::string> getDeviceList();
+	std::vector<std::string> getDeviceList() &;
 	int startRecord();
 	void stopRecord();
 
@@ -54,12 +56,11 @@ public:
 	};
 
 private:
-	//void getDeviceList();
 	int openDevice();
 	void closeDevice();
 	int initResampleCtx();
 	int initEncoderCtx();
-	int releaseAllCtx();
+	void releaseAllCtx();
 
 	/* 保存PCM数据 */
 	void dumpPCM(AVPacket* pkt);
@@ -83,6 +84,5 @@ private:
 	SwrContext*			m_swrCtx;
 
 	bool m_recording;
-	bool m_pause;
 };
 
