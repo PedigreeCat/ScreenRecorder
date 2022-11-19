@@ -49,11 +49,13 @@ private:
     int openDevice();
     void closeDevice();
     int initSwscaleCtx();
+    int initDecoderCtx();
     int initEncoderCtx();
     void releaseAllCtx();
 
     void dumpH264(AVPacket* p);
-    void scale_convert(AVPacket* pkt, AVFrame* frame);
+    void decode(AVPacket* p, AVFrame* f);
+    void scale_convert(AVFrame* rgba, AVFrame* yuv);
     void encode(AVFrame* f, AVPacket* p);
 private:
     std::string m_h264_filename;
@@ -63,6 +65,7 @@ private:
 
     /* ffmpeg context */
     AVFormatContext*    m_inputFormatCtx;
+    AVCodecContext*     m_decoderCtx;
     AVCodecContext*     m_encoderCtx;
     SwsContext*         m_swsCtx;
 

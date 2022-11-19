@@ -211,17 +211,17 @@ ffmpeg使用gdigrab的命令行参数
 ffmpeg -h demuxer=gdigrab
 
 # 测试录制桌面，默认录制整个桌面，多个屏幕会进行拼接
-ffmpeg -f gdigrab -framerate 30 -i desktop out.yuv
+ffmpeg -f gdigrab -framerate 30 -i desktop out.h264
 ```
 
-gdigrab采集到的数据是RGBA格式，需要转换为YUV420P再进行编码。
+gdigrab采集到的数据是BMP格式的，需要先解码为RGBA格式的，再转换为YUV420P才能进行编码。
 
 ffmpeg源码中没有H.264与H.265的软件编码器，需要使用xlib264和xlib265。
+
+将libx264加入到ffmpeg3.4.11重新编译。
 
 # 踩坑记录
 
 1. av_err2str中使用了复合字面量（C99标准），但是VS默认使用C++规则编译，所以要么只在.c文件中使用，要么改用av_strerror。
-
-2. dshow的demuxer未提供get_device_list方法，所以无法通过avdevice_list_devices接口获取设备列表。
-
-
+2. 3.4.11版本的ff_dshow_demuxer未提供get_device_list方法，所以无法通过avdevice_list_devices接口获取设备列表。
+3. 5.0.2版本的ff_dshow_demuxer虽然扩展了get_device_list方法，但是需要AVFormatContext作为参数，在不知道设备名称的情况下无法创建AVFormatContext，所以该接口调用不了。

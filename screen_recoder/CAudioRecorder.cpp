@@ -97,8 +97,8 @@ std::vector<std::string> CAudioRecorder::getDeviceList() &
 	AVDictionary* tmpDict = NULL;
 	std::vector<std::string> logVec;
 	bool findAudioFlag = false;
-
-	if (ret = av_dict_set(&tmpDict, "list_devices", "true", 0) < 0) {
+	ret = av_dict_set(&tmpDict, "list_devices", "true", 0);
+	if (ret < 0) {
 		DUMP_ERR("av_dict_set failed", ret);
 		goto free_resource;
 	}
@@ -379,8 +379,8 @@ int CAudioRecorder::initEncoderCtx()
 	m_encoderCtx->profile = FF_PROFILE_AAC_HE_V2;	/* AAC-LC */
 
 	/* ´ò¿ª±àÂëÆ÷ */
-	
-	if (ret = avcodec_open2(m_encoderCtx, codec, NULL) < 0) {
+	ret = avcodec_open2(m_encoderCtx, codec, NULL);
+	if (ret < 0) {
 		DUMP_ERR("avcodec_open2", ret);
 		return ERR_ALLOC_RES_FAIL;
 	}
