@@ -220,6 +220,34 @@ ffmpeg源码中没有H.264与H.265的软件编码器，需要使用xlib264和xli
 
 将libx264加入到ffmpeg3.4.11重新编译。
 
+# mp4封装
+
+先对ffmpeg提供的样例muxing.c进行分析
+
+```mermaid
+graph LR
+	main-->avformat_alloc_output_context2
+	main-->add_stream
+		add_stream-->avcodec_find_encoder
+		add_stream-->avformat_new_stream
+		add_stream-->avcodec_alloc_context3
+	main-->open_video
+		open_video-->avcodec_open2
+		open_video-->av_frame_get_buffer
+		open_video-->avcodec_parameters_from_context
+	main-->avio_open[avio_open/初始化avctx->pb]
+	main-->avformat_write_header
+	main-->主循环-->av_interleaved_write_frame
+	main-->av_write_trailer
+	main-->avio_closep
+	main-->avformat_free_context
+
+```
+
+1. 实际测试发现，将avcodec_find_encoder替换成avcodec_find_decoder也可以；
+4. 对于MP4的muxer，文件需要用avio_open打开使用；
+5. 在调用av_interleaved_write_frame前需要先对packet的pts和dts进行转换。
+
 # 踩坑记录
 
 1. av_err2str中使用了复合字面量（C99标准），但是VS默认使用C++规则编译，所以要么只在.c文件中使用，要么改用av_strerror。

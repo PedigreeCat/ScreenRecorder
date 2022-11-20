@@ -12,6 +12,7 @@ CDeskRecorder::CDeskRecorder()
     , m_encoderCtx(NULL)
     , m_swsCtx(NULL)
     , m_recording(false)
+    , m_mp4Mxuer(NULL)
     , m_worker()
 {
     /* register all devicde and codec */
@@ -29,6 +30,11 @@ CDeskRecorder::~CDeskRecorder()
 void CDeskRecorder::setDumpH264(const std::string& filepath)
 {
     m_h264_filename = filepath;
+}
+
+void CDeskRecorder::setMP4Muxer(CMP4Muxer* muxer)
+{
+    m_mp4Mxuer = muxer;
 }
 
 int CDeskRecorder::startRecord()
@@ -297,5 +303,7 @@ void CDeskRecorder::encode(AVFrame* f, AVPacket* p)
             DUMP_ERR("avcodec_send_frame failed", ret);
         }
         dumpH264(p);
+        if (m_mp4Mxuer)
+            m_mp4Mxuer->push_packet(p);
     }
 }

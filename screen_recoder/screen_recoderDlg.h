@@ -8,6 +8,7 @@
 #include <string>
 #include "CAudioRecorder.h"
 #include "CDeskRecorder.h"
+#include "CMP4Muxer.h"
 
 // CscreenrecoderDlg 对话框
 class CscreenrecoderDlg : public CDialogEx
@@ -54,6 +55,7 @@ private:
 	std::vector<std::string> m_audioDeviceVec;	/* 音频输入设备列表 */
 	CAudioRecorder* m_audioRecorderObj;
 	CDeskRecorder* m_deskRecorderObj;
+	CMP4Muxer* m_mp4MuxerObj;
 
 	BOOL m_logAreaGetFocus;
 };

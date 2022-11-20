@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <thread>
+#include "CMP4Muxer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,6 +30,8 @@ public:
     CDeskRecorder& operator =(const CDeskRecorder&&) = delete;
 
     void setDumpH264(const std::string& filepath);
+    void setMP4Muxer(CMP4Muxer* muxer);
+
     int startRecord();
     void stopRecord();
 
@@ -68,6 +71,8 @@ private:
     AVCodecContext*     m_decoderCtx;
     AVCodecContext*     m_encoderCtx;
     SwsContext*         m_swsCtx;
+
+    CMP4Muxer*          m_mp4Mxuer;
 
     bool m_recording;
 };

@@ -266,13 +266,16 @@ void CscreenrecoderDlg::OnBnClickedButtonRecord()
 				m_audioRecorderObj->setDumpAudioData("dumpAudio.aac");
 			m_audioRecorderObj->startRecord();
 		}
-
+		m_mp4MuxerObj = new CMP4Muxer();
+		if (m_mp4MuxerObj) {
+			m_mp4MuxerObj->open();
+		}
 		m_deskRecorderObj = new CDeskRecorder();
 		if (m_deskRecorderObj) {
+			if (m_mp4MuxerObj) m_deskRecorderObj->setMP4Muxer(m_mp4MuxerObj);
 			m_deskRecorderObj->setDumpH264("dumpVideo.h264");
 			m_deskRecorderObj->startRecord();
-		}
-			
+		}	
 	}
 	else {
 		SetDlgItemText(IDC_BUTTON_RECORD, _T("Start Record"));
@@ -283,6 +286,9 @@ void CscreenrecoderDlg::OnBnClickedButtonRecord()
 		if (m_deskRecorderObj) {
 			m_deskRecorderObj->stopRecord();
 			delete m_deskRecorderObj;
+		}
+		if (m_mp4MuxerObj) {
+			m_mp4MuxerObj->close();
 		}
 	}
 }

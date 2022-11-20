@@ -23,10 +23,16 @@ std::vector<std::string>* Clogger::m_logVec = nullptr;
 
 void Clogger::FFmpegLogCallback(void* ptr, int level, const char* format, va_list vl)
 {
+	int offset = 0;
+	AVClass* avc = ptr ? *(AVClass**)ptr : NULL;
 	static char utf8_buf[CONVERT_BUF_SIZE] = {0};
 	static char ansi_buf[CONVERT_BUF_SIZE] = {0};
+	if (avc) {
+		if (0 == strcmp("libx264", avc->item_name(ptr))) return;
+		offset += sprintf(utf8_buf + offset, "%s: ", avc->item_name(ptr));
+	}
 	/* ffmpeg中的日志为UTF-8编码，需要转换 */
-	vsprintf(utf8_buf, format, vl);
+	offset += vsprintf(utf8_buf + offset, format, vl);
 	Ctool::getInstance()->convertUTF8ToANSI(utf8_buf, ansi_buf);
 	if (m_ffmpegLogHook)
 		m_ffmpegLogHook(ansi_buf, m_logVec);

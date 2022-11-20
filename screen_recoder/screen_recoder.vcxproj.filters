@@ -63,6 +63,9 @@
     <ClInclude Include="CDeskRecorder.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CMP4Muxer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="screen_recoder.cpp">
@@ -99,6 +102,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CDeskRecorder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CMP4Muxer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

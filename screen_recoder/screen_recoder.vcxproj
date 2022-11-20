@@ -204,6 +204,7 @@
     <ClInclude Include="CAudioRecorder.h" />
     <ClInclude Include="CDeskRecorder.h" />
     <ClInclude Include="Clogger.h" />
+    <ClInclude Include="CMP4Muxer.h" />
     <ClInclude Include="Ctool.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
@@ -221,6 +222,7 @@
     <ClCompile Include="CAudioRecorder.cpp" />
     <ClCompile Include="CDeskRecorder.cpp" />
     <ClCompile Include="Clogger.cpp" />
+    <ClCompile Include="CMP4Muxer.cpp" />
     <ClCompile Include="Ctool.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
